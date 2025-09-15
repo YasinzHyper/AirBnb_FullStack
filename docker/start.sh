@@ -29,3 +29,4 @@ npx prisma db push --accept-data-loss
 
 echo "🎯 Starting Next.js development server..."
 npm run dev
+

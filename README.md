@@ -170,19 +170,30 @@ The Docker setup uses the following default configuration:
 ### Troubleshooting
 
 #### Common Issues
-1. **OpenSSL/Prisma compatibility warnings**: 
+1. **Line ending issues on Windows**:
+   ```
+   ./docker/start.sh: not found
+   ```
+   This has been fixed with the `.gitattributes` file and Dockerfile updates. The build process now automatically converts line endings. If you still encounter this issue, rebuild the containers:
+   ```bash
+   docker-compose down
+   docker-compose build --no-cache
+   docker-compose up
+   ```
+
+2. **OpenSSL/Prisma compatibility warnings**: 
    ```
    prisma:warn Prisma failed to detect the libssl/openssl version to use
    ```
    This is a warning that can be safely ignored. The Docker configuration includes the correct OpenSSL version for Alpine Linux.
 
-2. **MongoDB Replica Set requirement**:
+3. **MongoDB Replica Set requirement**:
    ```
    Prisma needs to perform transactions, which requires your MongoDB server to be run as a replica set
    ```
    This is automatically handled by the Docker setup. MongoDB is configured as a single-node replica set to support Prisma transactions. The mongo-setup service initializes this automatically.
 
-3. **Port conflicts**: If ports 3000, 27017, or 8081 are already in use:
+4. **Port conflicts**: If ports 3000, 27017, or 8081 are already in use:
    ```bash
    # Check what's using the ports
    netstat -tulpn | grep :3000
@@ -190,12 +201,12 @@ The Docker setup uses the following default configuration:
    # Modify ports in docker-compose.yml if needed
    ```
 
-3. **Permission issues on Linux/Mac**:
+5. **Permission issues on Linux/Mac**:
    ```bash
    sudo chown -R $USER:$USER .
    ```
 
-4. **Database connection issues**:
+6. **Database connection issues**:
    ```bash
    # Check if MongoDB container is running
    docker-compose ps
@@ -204,7 +215,7 @@ The Docker setup uses the following default configuration:
    docker-compose logs mongodb
    ```
 
-5. **Node modules issues**:
+7. **Node modules issues**:
    ```bash
    # Rebuild the containers
    docker-compose down

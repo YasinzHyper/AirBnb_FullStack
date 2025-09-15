@@ -1,0 +1,25 @@
+# Ensure shell scripts always use LF line endings, even on Windows
+*.sh text eol=lf
+*.bash text eol=lf
+
+# Ensure Docker-related files use LF line endings
+Dockerfile text eol=lf
+docker-compose.yml text eol=lf
+docker-compose.*.yml text eol=lf
+
+# Ensure JavaScript setup files use LF line endings
+docker/*.js text eol=lf
+
+# Default behavior for other text files
+* text=auto
+
+# Ensure certain files are treated as binary and not converted
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.svg binary
+*.pdf binary
+*.zip binary
+*.tar.gz binary

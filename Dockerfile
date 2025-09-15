@@ -28,8 +28,8 @@ RUN npm run build
 FROM base AS dev
 WORKDIR /app
 
-# Install OpenSSL for Prisma compatibility and netcat for health checks
-RUN apk add --no-cache libc6-compat openssl netcat-openbsd
+# Install OpenSSL for Prisma compatibility, netcat for health checks, and dos2unix for line ending conversion
+RUN apk add --no-cache libc6-compat openssl netcat-openbsd dos2unix
 
 # Install dependencies
 COPY package.json package-lock.json* ./
@@ -38,8 +38,8 @@ RUN npm ci
 # Copy source code
 COPY . .
 
-# Make startup script executable
-RUN chmod +x docker/start.sh
+# Convert line endings and make startup script executable
+RUN dos2unix docker/start.sh && chmod +x docker/start.sh
 
 # Generate Prisma Client
 RUN npx prisma generate
