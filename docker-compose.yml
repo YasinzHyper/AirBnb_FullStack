@@ -1,0 +1,93 @@
+services:
+  # MongoDB Database
+  mongodb:
+    image: mongo:7.0
+    container_name: airbnb-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - airbnb-network
+    command: ["--replSet", "rs0", "--bind_ip_all"]
+
+  # MongoDB Replica Set Initialization
+  mongo-setup:
+    image: mongo:7.0
+    container_name: airbnb-mongo-setup
+    depends_on:
+      - mongodb
+    networks:
+      - airbnb-network
+    volumes:
+      - ./docker/setup-replica-set.js:/setup-replica-set.js:ro
+    entrypoint:
+      - bash
+      - -c
+      - |
+        echo "Waiting for MongoDB to be ready..."
+        until mongosh --host mongodb:27017 --eval "print('MongoDB is ready')" >/dev/null 2>&1; do
+          sleep 2
+        done
+        echo "Initializing replica set..."
+        mongosh --host mongodb:27017 --file /setup-replica-set.js
+        echo "Replica set setup completed"
+    restart: "no"
+
+  # Next.js Application
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: airbnb-app
+    restart: unless-stopped
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=mongodb://mongodb:27017/airbnb?replicaSet=rs0
+      - NEXTAUTH_SECRET=your-nextauth-secret-key-here
+      - NEXTAUTH_URL=http://localhost:3000
+      - GITHUB_ID=your-github-client-id
+      - GITHUB_SECRET=your-github-client-secret
+      - GOOGLE_CLIENT_ID=your-google-client-id
+      - GOOGLE_CLIENT_SECRET=your-google-client-secret
+      - NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloudinary-cloud-name
+      # Prisma environment variables
+      - PRISMA_CLI_QUERY_ENGINE_TYPE=binary
+      - PRISMA_CLIENT_ENGINE_TYPE=binary
+    ports:
+      - "3000:3000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    depends_on:
+      - mongodb
+      - mongo-setup
+    networks:
+      - airbnb-network
+
+  # MongoDB Express (Optional - for database management)
+  mongo-express:
+    image: mongo-express:1.0.0
+    container_name: airbnb-mongo-express
+    restart: unless-stopped
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: admin123
+    ports:
+      - "8081:8081"
+    depends_on:
+      - mongodb
+      - mongo-setup
+    networks:
+      - airbnb-network
+
+volumes:
+  mongodb_data:
+
+networks:
+  airbnb-network:
+    driver: bridge
